@@ -5,12 +5,11 @@
 """
 import os
 import json
-import binascii
-import hashlib
 from functools import wraps
 
 from flask import current_app
 from flask_login import current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class UserManager(object):
@@ -47,7 +46,7 @@ class UserManager(object):
         # hash. If we get more authentication_methods, we will need to go to a
         # strategy object pattern that operates on User.data.
         if authentication_method == 'hash':
-            new_user['hash'] = make_salted_hash(password)
+            new_user['hash'] = generate_password_hash(password)
         elif authentication_method == 'cleartext':
             new_user['password'] = password
         else:
@@ -113,7 +112,7 @@ class User(object):
             authentication_method = get_default_authentication_method()
         # See comment in UserManager.add_user about authentication_method.
         if authentication_method == 'hash':
-            result = check_hashed_password(password, self.get('hash'))
+            result = check_password_hash(self.get('hash'), password)
         elif authentication_method == 'cleartext':
             result = (self.get('password') == password)
         else:
@@ -123,21 +122,6 @@ class User(object):
 
 def get_default_authentication_method():
     return current_app.config.get('DEFAULT_AUTHENTICATION_METHOD', 'cleartext')
-
-
-def make_salted_hash(password, salt=None):
-    if not salt:
-        salt = os.urandom(64)
-    d = hashlib.sha512()
-    d.update(salt[:32])
-    d.update(password)
-    d.update(salt[32:])
-    return binascii.hexlify(salt) + d.hexdigest()
-
-
-def check_hashed_password(password, salted_hash):
-    salt = binascii.unhexlify(salted_hash[:128])
-    return make_salted_hash(password, salt) == salted_hash
 
 
 def protect(f):
