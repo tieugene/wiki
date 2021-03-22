@@ -35,8 +35,10 @@
 								<li><a href="{{ url_for('wiki.tags') }}">Tags</a></li>
 								<li><a href="{{ url_for('wiki.search') }}">Search</a></li>
 								<li class="divider-vertical"></li>
-								<li><a href="{{ url_for('wiki.create') }}">New Page</a></li>
-								<li class="divider-vertical"></li>
+                                {% if current_user.is_authenticated %}
+								    <li><a href="{{ url_for('wiki.create') }}">New Page</a></li>
+	    							<li class="divider-vertical"></li>
+                                {%  endif %}
 								<li></li>
 							</ul>
 
